@@ -1,0 +1,508 @@
+--- 
+title: Sequencing App
+output: 
+  flexdashboard::flex_dashboard
+runtime: shiny
+orientation: rows
+vertical_layout: scroll 
+---
+
+<style>                     
+.navbar {
+  background-color:red;
+  border-color:black;
+}
+.navbar-brand {
+color:white!important;
+}
+
+</style> 
+
+```{r libraries, include=FALSE}
+source("libs.R")
+
+##Interested within AB 
+##Interested in AB after AB 
+
+
+#Michael's favorite Table libraries for Dashboarding
+# DT ---- gt -- > gtextras ---- reacttable -> reactablefmtr
+```
+
+
+
+
+
+Sequencing Charts {data-navmenu="Viz Tools" data-icon="fa-diagram-project"}
+===========================================================================
+
+
+Inputs{.sidebar}
+----------------
+
+```{r}
+checkboxGroupInput(
+  
+  inputId = "team",
+  label="Choose Team(s)",
+  choices=dat %>% 
+              pull(fielding_team) %>% 
+              unique(),
+  selected=dat %>% 
+            pull(fielding_team) %>% 
+            unique()
+)
+
+
+renderUI(
+selectInput(inputId = "pitcher",
+            label="Pitcher",
+            choices=dat %>% 
+                    filter(fielding_team %in% input$team) %>% 
+                    pull(pitcher) %>% 
+                    unique() %>% 
+                    sort(),
+            selected="Aaron Nola",
+            multiple=FALSE)
+)
+
+
+```
+
+
+
+Row
+------
+
+### Pitch Table
+
+```{r}
+
+renderDataTable({
+  
+datatable(
+dat %>% 
+  filter(isPitch==TRUE,
+         pitcher== input$pitcher) %>% 
+  mutate(bs_count=paste0(count.balls.start,"-",count.strikes.start),
+         inplay=ifelse(details.isInPlay==TRUE,1,0),
+         ptype=details.type.description,
+         outs=count.outs.start
+         ) %>% 
+  select(pitcher,pitchNumber,bs_count,outs,ptype,inplay,details.description),
+extensions = 'Buttons', options = list(
+    pageLength = 100000, scrollY = "600px",scrollX=TRUE,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+        
+  ),rownames=FALSE
+)
+
+})
+```
+
+
+
+
+
+
+### Strikezone Plot
+
+```{r}
+topKzone = 3.5
+botKzone = 1.5
+inKzone = -.85
+outKzone = 0.85
+
+kZone = data.frame(
+  PlateLocSide = c(inKzone, inKzone, outKzone, outKzone, inKzone)
+  , PlateLocHeight = c(botKzone, topKzone, topKzone, botKzone, botKzone)
+)
+
+ 
+renderPlotly({
+ 
+ggplotly(
+  ggplot()+
+  geom_point(data=dat %>% 
+               mutate(ptype=details.type.description) %>% 
+  filter(pitcher==input$pitcher,
+         is.na(ptype)==FALSE),
+  aes(x=pitchData.coordinates.pX,y=pitchData.coordinates.pZ,color=ptype,label=details.description))+geom_label()+coord_equal()+
+    geom_path(aes(PlateLocSide,PlateLocHeight),data=kZone)+
+       geom_segment(aes(x=-8.5/12,xend=8.5/12,y=(10/12)-1,yend=(10/12)-1),color="white")+ggtitle("Pitch Locations")+xlab("Location X (ft)")+ylab("Location Z (ft)")+
+    geom_segment(aes(x=-8.5/12,xend=-8.5/12,y=(10/12)-1,yend=0),color="white")+
+    geom_segment(aes(x=8.5/12,xend=8.5/12,y=(10/12)-1,yend=0),color="white")+
+    geom_segment(aes(x=8.5/12,xend=0,y=0,yend=(15/12)-1),color="white")+
+    geom_segment(aes(x=-8.5/12,xend=0,y=0,yend=(15/12)-1),color="white")+
+     dark_theme_bw()
+)
+
+})
+```
+
+
+Row 
+-------
+
+
+### Model Output
+
+```{r}
+
+```
+
+
+### Other
+
+```{r}
+
+```
+
+
+
+
+
+
+Summary Tables {data-navmenu="Viz Tools" data-icon="fa-user"}
+====================================================================
+
+Inputs{.sidebar}
+----------------
+
+```{r}
+### Scrape Savant data from a particular day --- i've select a day for you -- use this data frame throughout this page
+savant_data <- baseballr::scrape_statcast_savant_pitcher_all(start_date="2021-04-05",
+                                              end_date="2021-04-05")
+
+ 
+
+## in this same chunk create a selection dropdown for pitcher names , which is player_name use selectInput
+```
+
+
+Row
+-----
+
+### 
+
+```{r}
+#present pitch characteristics in this section, such as release speed, break characteristics, etc. -- make sure the table is dynamic, referencing the selectInput id for the pitcher that the user selects
+```
+
+###
+
+```{r}
+#create a reactive plot of your choosing here that shows release points for from a side view and from behind the pitcher ---
+```
+
+
+
+
+Row
+-----
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+
+
+Ad-Hoc Visuals {data-navmenu="Viz Tools" data-icon="fa-user"}
+====================================================================
+
+
+Inputs{.sidebar}
+-------------------
+
+```{r}
+
+```
+
+
+Row
+-----------
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+Row
+-----------
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+
+
+
+
+
+
+Model Validation {data-navmenu="Interactive Modeling" data-icon="fa-user"}
+====================================================================
+
+Inputs{.sidebar}
+----------------
+
+```{r}
+### Scrape Savant data from a particular day --- i've select a day for you -- use this data frame throughout this page
+savant_data <- baseballr::scrape_statcast_savant_pitcher_all(start_date="2021-04-05",
+                                              end_date="2021-04-05")
+
+ 
+
+## in this same chunk create a selection dropdown for pitcher names , which is player_name use selectInput
+```
+
+
+Row
+-----
+
+### 
+
+```{r}
+#present pitch characteristics in this section, such as release speed, break characteristics, etc. -- make sure the table is dynamic, referencing the selectInput id for the pitcher that the user selects
+```
+
+###
+
+```{r}
+#create a reactive plot of your choosing here that shows release points for from a side view and from behind the pitcher ---
+```
+
+
+
+
+Row
+-----
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+
+
+Matchup Results {data-navmenu="Interactive Modeling" data-icon="fa-user"}
+====================================================================
+
+
+Inputs{.sidebar}
+-------------------
+
+```{r}
+
+```
+
+
+Row
+-----------
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+Row
+-----------
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+Model Drag and Drop {data-navmenu="Interactive Modeling" data-icon="fa-user"}
+====================================================================
+
+
+Inputs{.sidebar}
+-------------------
+
+```{r}
+
+```
+
+
+Row
+-----------
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+Row
+-----------
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+
+Relief Pitcher Selection Tool {data-navmenu="Decision Tools" data-icon="fa-user"}
+====================================================================
+
+Inputs{.sidebar}
+----------------
+
+```{r}
+### Scrape Savant data from a particular day --- i've select a day for you -- use this data frame throughout this page
+savant_data <- baseballr::scrape_statcast_savant_pitcher_all(start_date="2021-04-05",
+                                              end_date="2021-04-05")
+
+ 
+
+## in this same chunk create a selection dropdown for pitcher names , which is player_name use selectInput
+```
+
+
+Row
+-----
+
+### 
+
+```{r}
+#present pitch characteristics in this section, such as release speed, break characteristics, etc. -- make sure the table is dynamic, referencing the selectInput id for the pitcher that the user selects
+```
+
+###
+
+```{r}
+#create a reactive plot of your choosing here that shows release points for from a side view and from behind the pitcher ---
+```
+
+
+
+
+Row
+-----
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+
+
+Sequence Optimization Tool {data-navmenu="Decision Tools" data-icon="fa-user"}
+====================================================================
+
+
+Inputs{.sidebar}
+-------------------
+
+```{r}
+
+```
+
+
+Row
+-----------
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
+Row
+-----------
+
+###
+
+```{r}
+
+```
+
+
+###
+
+```{r}
+
+```
+
